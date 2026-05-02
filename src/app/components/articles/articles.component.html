@@ -1,0 +1,367 @@
+<div class="container mx-auto p-6 max-w-5xl">
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-8">
+    <h1 class="text-3xl font-bold text-slate-800 flex items-center gap-3">
+      <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+        <i class="fa-solid fa-newspaper text-indigo-600"></i>
+      </div>
+      Article Summarizer
+    </h1>
+    <button 
+      *ngIf="!showForm"
+      (click)="showForm = true"
+      class="bg-indigo-600 text-white px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2 font-medium"
+    >
+      <i class="fa-solid fa-plus"></i> Nuevo Artículo
+    </button>
+  </div>
+
+  <!-- Form -->
+  <div *ngIf="showForm" class="mb-8 bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden">
+    <div class="bg-gradient-to-r from-indigo-50 to-purple-50 px-6 py-4 flex justify-between items-center border-b border-slate-100">
+      <h2 class="text-lg font-semibold text-slate-700 flex items-center gap-2">
+        <i class="fa-solid" [class.fa-pen-to-square]="isEditing" [class.fa-file-circle-plus]="!isEditing"></i>
+        {{ isEditing ? 'Editar Artículo' : 'Nuevo Artículo' }}
+      </h2>
+      <button 
+        (click)="resetForm()"
+        class="w-8 h-8 rounded-lg bg-slate-200 hover:bg-slate-300 flex items-center justify-center transition-colors"
+      >
+        <i class="fa-solid fa-xmark text-slate-600"></i>
+      </button>
+    </div>
+    
+    <div class="p-6 space-y-5">
+      <div>
+        <label class="block text-sm font-semibold text-slate-600 mb-2">
+          <i class="fa-solid fa-link mr-1"></i> URL del Artículo
+        </label>
+        <input 
+          type="url" 
+          [(ngModel)]="formData.url"
+          class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-slate-50 hover:bg-white"
+          placeholder="https://example.com/article"
+        >
+      </div>
+      
+      <div class="flex gap-4">
+        <div class="flex-1">
+          <label class="block text-sm font-semibold text-slate-600 mb-2">
+            <i class="fa-solid fa-language mr-1"></i> Idioma
+          </label>
+          <select [(ngModel)]="formData.lang" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-slate-50 hover:bg-white">
+            <option value="es">Español</option>
+            <option value="en">English</option>
+            <option value="fr">Français</option>
+            <option value="de">Deutsch</option>
+          </select>
+        </div>
+        <div class="flex-1">
+          <label class="block text-sm font-semibold text-slate-600 mb-2">
+            <i class="fa-solid fa-text-width mr-1"></i> Longitud (oraciones)
+          </label>
+          <input 
+            type="number" 
+            [(ngModel)]="formData.length"
+            min="1"
+            max="10"
+            class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-slate-50 hover:bg-white"
+          >
+        </div>
+      </div>
+      
+      <div class="flex gap-3 pt-2">
+        <button 
+          (click)="onSubmit()"
+          [disabled]="formLoading || !formData.url"
+          class="bg-indigo-600 text-white px-6 py-2.5 rounded-xl hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2 font-medium"
+        >
+          <i class="fa-solid" [class.fa-spinner]="formLoading" [class.fa-spin]="formLoading" [class.fa-paper-plane]="!formLoading"></i>
+          {{ formLoading ? 'Procesando...' : (isEditing ? 'Actualizar' : 'Resumir') }}
+        </button>
+        <button 
+          (click)="resetForm()"
+          class="bg-slate-100 text-slate-600 px-5 py-2.5 rounded-xl hover:bg-slate-200 transition-all duration-200 flex items-center gap-2 font-medium"
+        >
+          <i class="fa-solid fa-xmark"></i> Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading && !showForm" class="text-center py-16">
+    <div class="inline-flex items-center gap-3 text-slate-500">
+      <i class="fa-solid fa-spinner fa-spin text-2xl text-indigo-500"></i>
+      <span class="text-lg">Cargando artículos...</span>
+    </div>
+  </div>
+
+  <!-- Empty state -->
+  <div *ngIf="!loading && articles.length === 0" class="text-center py-16">
+    <div class="w-20 h-20 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+      <i class="fa-solid fa-inbox text-3xl text-slate-400"></i>
+    </div>
+    <p class="text-slate-500 text-lg">No hay artículos registrados</p>
+    <p class="text-slate-400 text-sm mt-1">Haz clic en "Nuevo Artículo" para comenzar</p>
+  </div>
+
+  <!-- Article List -->
+  <div class="space-y-6">
+    <div 
+      *ngFor="let article of articles"
+      class="bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-lg transition-all duration-300 overflow-hidden group"
+    >
+      <div class="p-6">
+        <!-- Header with status and actions -->
+        <div class="flex justify-between items-start mb-4">
+          <div class="flex items-center gap-3">
+            <span [class]="getStatusClass(article.status)" class="px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2">
+              <i class="fa-solid text-[10px]" 
+                 [class.fa-circle-check]="article.status === 'generated'"
+                 [class.fa-circle-pause]="article.status === 'inactive'"
+                 [class.fa-clock]="article.status === 'pending'"
+                 [class.fa-circle-exclamation]="article.status === 'failed'"></i>
+              {{ getStatusLabel(article.status) }}
+            </span>
+            <span class="text-xs text-slate-400 flex items-center gap-1.5">
+              <i class="fa-regular fa-clock"></i>
+              {{ article.createdAt | date:'short' }}
+            </span>
+          </div>
+          
+          <!-- Actions -->
+          <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <button 
+              (click)="onViewDetail(article)"
+              class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 flex items-center justify-center transition-colors"
+              title="Ver detalles"
+            >
+              <i class="fa-solid fa-eye text-xs"></i>
+            </button>
+            <button 
+              (click)="onEdit(article)"
+              [disabled]="article.status === 'pending'"
+              class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-100 disabled:bg-slate-100 disabled:text-slate-400 flex items-center justify-center transition-colors"
+              title="Editar"
+            >
+              <i class="fa-solid fa-pen-to-square text-xs"></i>
+            </button>
+            <button 
+              *ngIf="canDelete(article)"
+              (click)="onSoftDelete(article)"
+              class="w-8 h-8 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center transition-colors"
+              title="Eliminar"
+            >
+              <i class="fa-solid fa-trash-can text-xs"></i>
+            </button>
+            <button 
+              *ngIf="canRestore(article)"
+              (click)="onRestore(article)"
+              class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 flex items-center justify-center transition-colors"
+              title="Restaurar"
+            >
+              <i class="fa-solid fa-rotate-left text-xs"></i>
+            </button>
+          </div>
+        </div>
+        
+        <!-- URL with better formatting -->
+        <div class="mb-4">
+          <div class="flex items-start gap-2">
+            <i class="fa-solid fa-link text-slate-400 text-xs mt-1 flex-shrink-0"></i>
+            <a [href]="article.url" target="_blank" 
+               class="text-indigo-600 hover:text-indigo-800 text-sm leading-relaxed break-all hover:underline transition-colors">
+              {{ article.url }}
+            </a>
+          </div>
+        </div>
+        
+        <!-- Summary with better presentation -->
+        <div *ngIf="article.summary" class="mb-4">
+          <div class="bg-gradient-to-r from-slate-50 to-slate-50/50 p-4 rounded-xl border-l-4 border-indigo-200">
+            <div class="flex items-start gap-3">
+              <i class="fa-solid fa-quote-left text-indigo-300 text-sm mt-1 flex-shrink-0"></i>
+              <p class="text-slate-700 text-sm leading-relaxed">{{ article.summary }}</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Error message -->
+        <div *ngIf="article.errorMessage" class="mb-4">
+          <div class="bg-red-50 border border-red-100 p-4 rounded-xl">
+            <div class="flex items-start gap-3">
+              <i class="fa-solid fa-triangle-exclamation text-red-500 text-sm mt-0.5 flex-shrink-0"></i>
+              <p class="text-red-700 text-sm leading-relaxed">{{ article.errorMessage }}</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Meta information -->
+        <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+          <div class="flex items-center gap-6 text-xs text-slate-500">
+            <span class="flex items-center gap-1.5">
+              <i class="fa-solid fa-globe"></i> 
+              <span class="font-medium">{{ article.language.toUpperCase() }}</span>
+            </span>
+            <span class="flex items-center gap-1.5">
+              <i class="fa-solid fa-list-ol"></i> 
+              <span class="font-medium">{{ article.length }} {{ article.length === 1 ? 'oración' : 'oraciones' }}</span>
+            </span>
+          </div>
+          
+          <!-- Quick actions for mobile -->
+          <div class="flex items-center gap-2 md:hidden">
+            <button 
+              (click)="onViewDetail(article)"
+              class="text-indigo-600 hover:text-indigo-800 text-xs font-medium"
+            >
+              Ver más
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Modal -->
+<div *ngIf="showConfirm" class="fixed inset-0 z-50 flex items-center justify-center p-4" (click)="onConfirmCancel()">
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+  <div class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-in" (click)="$event.stopPropagation()">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-12 h-12 rounded-xl flex items-center justify-center"
+           [class.bg-red-100]="confirmIcon === 'fa-solid fa-trash-can'"
+           [class.bg-emerald-100]="confirmIcon === 'fa-solid fa-rotate-left'">
+        <i [class]="confirmIcon" 
+           [class.text-red-600]="confirmIcon === 'fa-solid fa-trash-can'"
+           [class.text-emerald-600]="confirmIcon === 'fa-solid fa-rotate-left'"
+           class="text-lg"></i>
+      </div>
+      <h3 class="text-lg font-bold text-slate-800">{{ confirmTitle }}</h3>
+    </div>
+    <p class="text-slate-600 text-sm leading-relaxed mb-6">{{ confirmMessage }}</p>
+    <div class="flex gap-3 justify-end">
+      <button 
+        (click)="onConfirmCancel()"
+        class="px-5 py-2.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors font-medium text-sm"
+      >
+        <i class="fa-solid fa-xmark mr-1"></i> Cancelar
+      </button>
+      <button 
+        (click)="onConfirmAccept()"
+        [class]="confirmBtnClass"
+        class="px-5 py-2.5 rounded-xl text-white transition-colors font-medium text-sm shadow-md"
+      >
+        <i [class]="confirmIcon" class="mr-1"></i> Confirmar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div *ngIf="showDetail && detailArticle" class="fixed inset-0 z-50 flex items-center justify-center p-4" (click)="onCloseDetail()">
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+  <div class="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden" (click)="$event.stopPropagation()">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-indigo-50 to-purple-50 px-6 py-4 flex justify-between items-center border-b border-slate-100">
+      <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+        <i class="fa-solid fa-newspaper text-indigo-600"></i>
+        Detalle del Artículo
+      </h3>
+      <button 
+        (click)="onCloseDetail()"
+        class="w-8 h-8 rounded-lg bg-slate-200 hover:bg-slate-300 flex items-center justify-center transition-colors"
+      >
+        <i class="fa-solid fa-xmark text-slate-600"></i>
+      </button>
+    </div>
+    
+    <!-- Body -->
+    <div class="p-6 space-y-4">
+      <!-- Status -->
+      <div class="flex items-center gap-3">
+        <span [class]="getStatusClass(detailArticle.status)" class="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5">
+          <i class="fa-solid text-[10px]" 
+             [class.fa-circle-check]="detailArticle.status === 'generated'"
+             [class.fa-circle-pause]="detailArticle.status === 'inactive'"
+             [class.fa-clock]="detailArticle.status === 'pending'"
+             [class.fa-circle-exclamation]="detailArticle.status === 'failed'"></i>
+          {{ getStatusLabel(detailArticle.status) }}
+        </span>
+        <span class="text-xs text-slate-400 flex items-center gap-1">
+          <i class="fa-regular fa-clock"></i>
+          {{ detailArticle.createdAt | date:'medium' }}
+        </span>
+      </div>
+
+      <!-- URL -->
+      <div>
+        <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">URL</label>
+        <a [href]="detailArticle.url" target="_blank" class="text-indigo-600 hover:text-indigo-800 text-sm mt-1 block flex items-center gap-1.5 break-all">
+          <i class="fa-solid fa-arrow-up-right-from-square text-xs flex-shrink-0"></i>
+          {{ detailArticle.url }}
+        </a>
+      </div>
+
+      <!-- Summary -->
+      <div *ngIf="detailArticle.summary">
+        <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Resumen</label>
+        <div class="mt-1 text-sm text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-xl">
+          <i class="fa-solid fa-quote-left text-slate-300 mr-1"></i>
+          {{ detailArticle.summary }}
+        </div>
+      </div>
+
+      <!-- Error -->
+      <div *ngIf="detailArticle.errorMessage">
+        <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Error</label>
+        <div class="mt-1 text-sm bg-red-50 text-red-600 p-3 rounded-xl flex items-start gap-2">
+          <i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
+          {{ detailArticle.errorMessage }}
+        </div>
+      </div>
+
+      <!-- Meta info -->
+      <div class="flex gap-6 pt-2 border-t border-slate-100">
+        <div>
+          <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Idioma</label>
+          <p class="text-sm text-slate-700 mt-0.5 flex items-center gap-1.5">
+            <i class="fa-solid fa-globe text-slate-400"></i> {{ detailArticle.language }}
+          </p>
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Longitud</label>
+          <p class="text-sm text-slate-700 mt-0.5 flex items-center gap-1.5">
+            <i class="fa-solid fa-list-ol text-slate-400"></i> {{ detailArticle.length }} oraciones
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer actions -->
+    <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex gap-3 justify-end">
+      <button 
+        (click)="onEdit(detailArticle); onCloseDetail()"
+        [disabled]="detailArticle.status === 'pending'"
+        class="px-4 py-2 rounded-xl bg-amber-50 text-amber-600 hover:bg-amber-100 disabled:bg-slate-100 disabled:text-slate-400 transition-colors font-medium text-sm flex items-center gap-1.5"
+      >
+        <i class="fa-solid fa-pen-to-square text-xs"></i> Editar
+      </button>
+      <button 
+        *ngIf="canDelete(detailArticle)"
+        (click)="onSoftDelete(detailArticle); onCloseDetail()"
+        class="px-4 py-2 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition-colors font-medium text-sm flex items-center gap-1.5"
+      >
+        <i class="fa-solid fa-trash-can text-xs"></i> Eliminar
+      </button>
+      <button 
+        *ngIf="canRestore(detailArticle)"
+        (click)="onRestore(detailArticle); onCloseDetail()"
+        class="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors font-medium text-sm flex items-center gap-1.5"
+      >
+        <i class="fa-solid fa-rotate-left text-xs"></i> Restaurar
+      </button>
+    </div>
+  </div>
+</div>
