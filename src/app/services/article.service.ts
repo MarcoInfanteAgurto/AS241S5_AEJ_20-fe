@@ -14,7 +14,7 @@ export interface ArticleSummary {
   summary?: string;
   language: string;
   length: number;
-  status: 'generated' | 'active' | 'inactive' | 'pending' | 'failed';
+  status: 'active' | 'inactive' | 'pending' | 'failed';
   errorMessage?: string;
   createdAt?: string;
 }
@@ -23,7 +23,7 @@ export interface ArticleSummary {
   providedIn: 'root'
 })
 export class ArticleService {
-  private apiUrl = 'http://localhost:8081/api/articles';
+  private readonly apiUrl = '/api/articles';
 
   constructor(private http: HttpClient) {}
 
@@ -41,10 +41,6 @@ export class ArticleService {
 
   getByStatus(status: string): Observable<ArticleSummary[]> {
     return this.http.get<ArticleSummary[]>(`${this.apiUrl}/status/${status}`);
-  }
-
-  update(id: string, request: ArticleRequest): Observable<ArticleSummary> {
-    return this.http.put<ArticleSummary>(`${this.apiUrl}/${id}`, request);
   }
 
   softDelete(id: string): Observable<ArticleSummary> {

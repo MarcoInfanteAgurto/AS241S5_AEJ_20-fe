@@ -68,7 +68,8 @@ export class ImagesComponent implements OnInit, AfterViewInit {
         console.log('Setting images array with length:', data.length);
         
         // Ordenar por fecha de creación (más recientes primero)
-        const sortedImages = [...data].sort((a, b) => {
+        const sortedImages = [...data]
+          .sort((a, b) => {
           const dateA = new Date(a.createdAt || 0);
           const dateB = new Date(b.createdAt || 0);
           return dateB.getTime() - dateA.getTime(); // Orden descendente
@@ -96,70 +97,17 @@ export class ImagesComponent implements OnInit, AfterViewInit {
 
     this.formLoading = true;
 
-    if (this.isEditing && this.selectedImage?.id) {
-      this.imageService.update(this.selectedImage.id, this.formData).subscribe({
-        next: () => {
-          this.loadImages();
-          this.resetForm();
-          this.formLoading = false;
-        },
-        error: (err) => {
-          console.error('Error updating image:', err);
-          this.formLoading = false;
-        }
-      });
-    } else {
-      this.imageService.create(this.formData).subscribe({
-        next: () => {
-          this.loadImages();
-          this.resetForm();
-          this.formLoading = false;
-        },
-        error: (err) => {
-          console.error('Error creating image:', err);
-          this.formLoading = false;
-        }
-      });
-    }
-  }
-
-  onEdit(image: ImageRecord): void {
-    this.selectedImage = image;
-    this.formData = {
-      prompt: image.prompt,
-      styleId: image.styleId || 4,
-      size: image.size
-    };
-    this.isEditing = true;
-    this.showForm = true;
-  }
-
-  onSoftDelete(image: ImageRecord): void {
-    this.confirmTitle = 'Eliminar Imagen';
-    this.confirmMessage = `¿Estás seguro de desactivar la imagen con prompt "${image.prompt}"?`;
-    this.confirmIcon = 'fa-solid fa-trash-can';
-    this.confirmBtnClass = 'bg-red-600 hover:bg-red-700';
-    this.confirmAction = () => {
-      this.imageService.softDelete(image.id!).subscribe({
-        next: () => this.loadImages(),
-        error: (err) => console.error('Error deleting image:', err)
-      });
-    };
-    this.showConfirm = true;
-  }
-
-  onRestore(image: ImageRecord): void {
-    this.confirmTitle = 'Restaurar Imagen';
-    this.confirmMessage = `¿Estás seguro de restaurar la imagen con prompt "${image.prompt}"?`;
-    this.confirmIcon = 'fa-solid fa-rotate-left';
-    this.confirmBtnClass = 'bg-emerald-600 hover:bg-emerald-700';
-    this.confirmAction = () => {
-      this.imageService.restore(image.id!).subscribe({
-        next: () => this.loadImages(),
-        error: (err) => console.error('Error restoring image:', err)
-      });
-    };
-    this.showConfirm = true;
+    this.imageService.create(this.formData).subscribe({
+      next: () => {
+        this.loadImages();
+        this.resetForm();
+        this.formLoading = false;
+      },
+      error: (err) => {
+        console.error('Error creating image:', err);
+        this.formLoading = false;
+      }
+    });
   }
 
   onConfirmAccept(): void {
@@ -178,9 +126,17 @@ export class ImagesComponent implements OnInit, AfterViewInit {
     this.showDetail = true;
   }
 
+  onImageError(image: ImageRecord): void {
+    image.imageUrl = undefined;
+  }
+
   onCloseDetail(): void {
     this.showDetail = false;
     this.detailImage = null;
+  }
+
+  getSafeImageUrl(imageUrl?: string): string | null {
+    return imageUrl ?? null;
   }
 
   resetForm(): void {
@@ -194,7 +150,6 @@ export class ImagesComponent implements OnInit, AfterViewInit {
   getStatusClass(status: string): string {
     switch (status) {
       case 'generated': return 'bg-green-100 text-green-800';
-      case 'inactive': return 'bg-gray-100 text-gray-800';
       case 'pending': return 'bg-yellow-100 text-yellow-800';
       case 'failed': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
@@ -204,10 +159,12 @@ export class ImagesComponent implements OnInit, AfterViewInit {
   getStatusLabel(status: string): string {
     switch (status) {
       case 'generated': return 'Generado';
-      case 'inactive': return 'Inactivo';
       case 'pending': return 'Pendiente';
       case 'failed': return 'Fallido';
       default: return status;
     }
   }
 }
+
+
+

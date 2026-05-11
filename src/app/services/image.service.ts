@@ -14,7 +14,7 @@ export interface ImageRecord {
   imageUrl?: string;
   styleId?: number;
   size: string;
-  status: 'pending' | 'generated' | 'failed' | 'inactive';
+  status: 'pending' | 'generated' | 'failed';
   errorMessage?: string;
   createdAt?: string;
 }
@@ -23,7 +23,7 @@ export interface ImageRecord {
   providedIn: 'root'
 })
 export class ImageService {
-  private apiUrl = 'http://localhost:8081/api/images';
+  private readonly apiUrl = '/api/images';
 
   constructor(private http: HttpClient) {}
 
@@ -43,15 +43,4 @@ export class ImageService {
     return this.http.get<ImageRecord[]>(`${this.apiUrl}/status/${status}`);
   }
 
-  update(id: string, request: ImageRequest): Observable<ImageRecord> {
-    return this.http.put<ImageRecord>(`${this.apiUrl}/${id}`, request);
-  }
-
-  softDelete(id: string): Observable<ImageRecord> {
-    return this.http.delete<ImageRecord>(`${this.apiUrl}/${id}`);
-  }
-
-  restore(id: string): Observable<ImageRecord> {
-    return this.http.patch<ImageRecord>(`${this.apiUrl}/${id}/restore`, {});
-  }
 }

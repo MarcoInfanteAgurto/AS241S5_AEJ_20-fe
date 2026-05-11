@@ -70,11 +70,11 @@ export class ArticlesComponent implements OnInit, AfterViewInit {
         // Crear un mapa para manejar duplicados por URL
         const articleMap = new Map<string, ArticleSummary>();
         
-        // Prioridad de estados: inactive > failed > generated > pending
+        // Prioridad de estados: inactive > failed > active > pending
         const statusPriority: { [key: string]: number } = {
           'inactive': 4,
           'failed': 3,
-          'generated': 2,
+          'active': 2,
           'pending': 1
         };
         
@@ -133,42 +133,17 @@ export class ArticlesComponent implements OnInit, AfterViewInit {
 
     this.formLoading = true;
 
-    if (this.isEditing && this.selectedArticle?.id) {
-      this.articleService.update(this.selectedArticle.id, this.formData).subscribe({
-        next: () => {
-          this.loadArticles();
-          this.resetForm();
-          this.formLoading = false;
-        },
-        error: (err) => {
-          console.error('Error updating article:', err);
-          this.formLoading = false;
-        }
-      });
-    } else {
-      this.articleService.create(this.formData).subscribe({
-        next: () => {
-          this.loadArticles();
-          this.resetForm();
-          this.formLoading = false;
-        },
-        error: (err) => {
-          console.error('Error creating article:', err);
-          this.formLoading = false;
-        }
-      });
-    }
-  }
-
-  onEdit(article: ArticleSummary): void {
-    this.selectedArticle = article;
-    this.formData = {
-      url: article.url,
-      lang: article.language,
-      length: article.length
-    };
-    this.isEditing = true;
-    this.showForm = true;
+    this.articleService.create(this.formData).subscribe({
+      next: () => {
+        this.loadArticles();
+        this.resetForm();
+        this.formLoading = false;
+      },
+      error: (err) => {
+        console.error('Error creating article:', err);
+        this.formLoading = false;
+      }
+    });
   }
 
   onSoftDelete(article: ArticleSummary): void {
@@ -245,7 +220,7 @@ export class ArticlesComponent implements OnInit, AfterViewInit {
 
   getStatusClass(status: string): string {
     switch (status) {
-      case 'generated': return 'bg-green-100 text-green-800';
+      case 'active': return 'bg-green-100 text-green-800';
       case 'inactive': return 'bg-red-100 text-red-800';
       case 'pending': return 'bg-yellow-100 text-yellow-800';
       case 'failed': return 'bg-red-100 text-red-800';
@@ -255,7 +230,7 @@ export class ArticlesComponent implements OnInit, AfterViewInit {
 
   getStatusLabel(status: string): string {
     switch (status) {
-      case 'generated': return 'Generado';
+      case 'active': return 'Activo';
       case 'inactive': return 'Inactivo';
       case 'pending': return 'Pendiente';
       case 'failed': return 'Fallido';
@@ -264,8 +239,8 @@ export class ArticlesComponent implements OnInit, AfterViewInit {
   }
 
   canDelete(article: ArticleSummary): boolean {
-    console.log(`Article ${article.id} status: ${article.status}, canDelete: ${article.status === 'generated'}`);
-    return article.status === 'generated';
+    console.log(`Article ${article.id} status: ${article.status}, canDelete: ${article.status === 'active'}`);
+    return article.status === 'active';
   }
 
   canRestore(article: ArticleSummary): boolean {

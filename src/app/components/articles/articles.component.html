@@ -20,8 +20,8 @@
   <div *ngIf="showForm" class="mb-8 bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden">
     <div class="bg-gradient-to-r from-indigo-50 to-purple-50 px-6 py-4 flex justify-between items-center border-b border-slate-100">
       <h2 class="text-lg font-semibold text-slate-700 flex items-center gap-2">
-        <i class="fa-solid" [class.fa-pen-to-square]="isEditing" [class.fa-file-circle-plus]="!isEditing"></i>
-        {{ isEditing ? 'Editar Artículo' : 'Nuevo Artículo' }}
+        <i class="fa-solid fa-file-circle-plus"></i>
+        Nuevo Artículo
       </h2>
       <button 
         (click)="resetForm()"
@@ -77,7 +77,7 @@
           class="bg-indigo-600 text-white px-6 py-2.5 rounded-xl hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2 font-medium"
         >
           <i class="fa-solid" [class.fa-spinner]="formLoading" [class.fa-spin]="formLoading" [class.fa-paper-plane]="!formLoading"></i>
-          {{ formLoading ? 'Procesando...' : (isEditing ? 'Actualizar' : 'Resumir') }}
+          {{ formLoading ? 'Procesando...' : 'Resumir' }}
         </button>
         <button 
           (click)="resetForm()"
@@ -118,7 +118,7 @@
           <div class="flex items-center gap-3">
             <span [class]="getStatusClass(article.status)" class="px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2">
               <i class="fa-solid text-[10px]" 
-                 [class.fa-circle-check]="article.status === 'generated'"
+                 [class.fa-circle-check]="article.status === 'active'"
                  [class.fa-circle-pause]="article.status === 'inactive'"
                  [class.fa-clock]="article.status === 'pending'"
                  [class.fa-circle-exclamation]="article.status === 'failed'"></i>
@@ -138,14 +138,6 @@
               title="Ver detalles"
             >
               <i class="fa-solid fa-eye text-xs"></i>
-            </button>
-            <button 
-              (click)="onEdit(article)"
-              [disabled]="article.status === 'pending'"
-              class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-100 disabled:bg-slate-100 disabled:text-slate-400 flex items-center justify-center transition-colors"
-              title="Editar"
-            >
-              <i class="fa-solid fa-pen-to-square text-xs"></i>
             </button>
             <button 
               *ngIf="canDelete(article)"
@@ -283,7 +275,7 @@
       <div class="flex items-center gap-3">
         <span [class]="getStatusClass(detailArticle.status)" class="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5">
           <i class="fa-solid text-[10px]" 
-             [class.fa-circle-check]="detailArticle.status === 'generated'"
+             [class.fa-circle-check]="detailArticle.status === 'active'"
              [class.fa-circle-pause]="detailArticle.status === 'inactive'"
              [class.fa-clock]="detailArticle.status === 'pending'"
              [class.fa-circle-exclamation]="detailArticle.status === 'failed'"></i>
@@ -341,13 +333,6 @@
 
     <!-- Footer actions -->
     <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex gap-3 justify-end">
-      <button 
-        (click)="onEdit(detailArticle); onCloseDetail()"
-        [disabled]="detailArticle.status === 'pending'"
-        class="px-4 py-2 rounded-xl bg-amber-50 text-amber-600 hover:bg-amber-100 disabled:bg-slate-100 disabled:text-slate-400 transition-colors font-medium text-sm flex items-center gap-1.5"
-      >
-        <i class="fa-solid fa-pen-to-square text-xs"></i> Editar
-      </button>
       <button 
         *ngIf="canDelete(detailArticle)"
         (click)="onSoftDelete(detailArticle); onCloseDetail()"

@@ -1,0 +1,15 @@
+{
+  "/api": {
+    "target": "http://localhost:8081",
+    "secure": false,
+    "changeOrigin": true
+  },
+  "/image-proxy": {
+    "target": "https://pub-static.aiease.ai",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/image-proxy": ""
+    }
+  }
+}
