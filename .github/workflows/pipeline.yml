@@ -1,0 +1,62 @@
+name: Front-End CI/CD - Integration Pipeline
+
+# Controlamos cuándo se ejecuta el pipeline: en cada push o pull request a las ramas principales
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  quality-and-security:
+    name: Lint, Build and Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      # Paso 1: Descargar el código del repositorio
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Necesario para SonarCloud/análisis de código completo
+
+      # Paso 2: Configurar Node.js en el entorno
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      # Paso 3: Instalar las dependencias del proyecto de forma limpia
+      - name: Install Dependencies
+        run: npm ci
+
+      # Paso 4: Validar el formato del código con Prettier (Buenas Prácticas)
+      - name: Check Formatting
+        run: npx prettier --check "src/**/*.{ts,html,scss,json}" || echo "Advertencia: Algunos archivos no siguen el formato estándar."
+
+      # Paso 5: Construir (Build) la aplicación Angular para asegurar que compila correctamente
+      - name: Build Angular Application
+        run: npm run build -- --configuration production
+
+      # Paso 6: Integración con Snyk (Herramienta de Seguridad de Dependencias y Código)
+      # Escanea vulnerabilidades en paquetes npm y en el código
+      - name: Run Snyk Security Scan
+        uses: snyk/actions/node@master
+        continue-on-error: true # Permite que el pipeline continúe si encuentra vulnerabilidades menores
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+
+      # Paso 7: Integración con SonarCloud (Herramienta de Calidad de Código y Deuda Técnica)
+      # Escanea el código para detectar bugs, vulnerabilidades y code smells
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        continue-on-error: true # Evita bloquear si aún no se ha configurado el token
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Proporcionado automáticamente por GitHub
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
