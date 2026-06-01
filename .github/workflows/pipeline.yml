@@ -36,7 +36,8 @@ jobs:
 
       # Paso 4: Validar el formato del código con Prettier (Buenas Prácticas)
       - name: Check Formatting
-        run: npx prettier --check "src/**/*.{ts,html,scss,json}" || echo "Advertencia: Algunos archivos no siguen el formato estándar."
+        run: |
+          npx prettier --check "src/**/*.{ts,html,scss,json}" || echo "Advertencia: Algunos archivos no siguen el formato estandar."
 
       # Paso 5: Construir (Build) la aplicación Angular para asegurar que compila correctamente
       - name: Build Angular Application
