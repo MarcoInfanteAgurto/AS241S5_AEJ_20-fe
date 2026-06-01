@@ -44,13 +44,14 @@ jobs:
         run: npm run build -- --configuration production
 
       # Paso 6: Integración con Snyk (Herramienta de Seguridad de Dependencias y Código)
-      # Escanea vulnerabilidades en paquetes npm y en el código
+      # Escanea vulnerabilidades en paquetes npm y en el código y publica en tu panel de snyk.io
       - name: Run Snyk Security Scan
         uses: snyk/actions/node@master
         continue-on-error: true # Permite que el pipeline continúe si encuentra vulnerabilidades menores
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
+          command: monitor
           args: --severity-threshold=high
 
       # Paso 7: Integración con SonarCloud (Herramienta de Calidad de Código y Deuda Técnica)
